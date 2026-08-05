@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Video Creator Studio - Unlimited Length</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #f8fafc;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: var(--bg-color); color: var(--text); padding: 20px; }
+
+    header { text-align: center; margin-bottom: 25px; }
+    header h1 { font-size: 2.2rem; color: #818cf8; margin-bottom: 5px; }
+    header p { color: #94a3b8; }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: #cbd5e1; font-weight: 600; }
+    input[type="text"], textarea, select, input[type="file"], input[type="range"] {
+      width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155;
+      background: #0f172a; color: white; outline: none; margin-bottom: 5px;
+    }
+
+    .btn {
+      background: var(--accent); color: white; border: none; padding: 12px 18px;
+      font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #334155; margin-top: 8px; }
+    .btn-secondary:hover { background: #475569; }
+
+    /* Preview Canvas Area */
+    .preview-area { display: flex; flex-direction: column; align-items: center; }
+    .canvas-wrapper {
+      position: relative; width: 100%; max-width: 720px; aspect-ratio: 16/9;
+      background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #334155;
+    }
+    canvas { width: 100%; height: 100%; object-fit: contain; }
+
+    /* Scene Timeline Controls */
+    .timeline {
+      width: 100%; max-width: 720px; margin-top: 20px; background: #0f172a;
+      padding: 15px; border-radius: 8px; border: 1px solid #334155;
+    }
+    .scene-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+    .scene-card {
+      min-width: 140px; background: #1e293b; border: 2px solid #334155;
+      padding: 10px; border-radius: 6px; cursor: pointer; text-align: center;
+    }
+    .scene-card.active { border-color: var(--accent); background: #312e81; }
+
+    /* Theme Filters CSS */
+    .filter-none { filter: none; }
+    .filter-cinematic { filter: contrast(115%) saturate(125%) brightness(95%); }
+    .filter-vintage { filter: sepia(50%) contrast(90%); }
+    .filter-cyberpunk { filter: hue-rotate(180deg) saturate(200%); }
+    .filter-bw { filter: grayscale(100%) contrast(150%); }
+
+    .controls-row { display: flex; gap: 10px; margin-top: 15px; width: 100%; max-width: 720px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎬 AI Video Creator Studio</h1>
+    <p>अनलिमिटेड लंबाई के वीडियो बनाएं कस्टम कैरेक्टर, बैकग्राउंड, वॉइस और थीम्स के साथ</p>
+  </header>
+
+  <div class="app-container">
+    <div class="panel">
+      <h3>सीन सेटिंग्स (Scene Settings)</h3>
+      <br>
+
+      <div class="form-group">
+        <label>1. बैकग्राउंड इमेज (Custom Background)</label>
+        <input type="file" id="bgInput" accept="image/*">
+      </div>
+
+      <div class="form-group">
+        <label>2. कैरेक्टर/अवतार (Custom Character)</label>
+        <input type="file" id="charInput" accept="image/*">
+      </div>
+
+      <div class="form-group">
+        <label>3. सीन स्क्रिप्ट / कस्टम वॉइस टेक्स्ट</label>
+        <textarea id="sceneText" rows="3" placeholder="यहाँ इस सीन का डायलॉग लिखें..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>4. वॉइस स्टाइल (Voice Synthesizer)</label>
+        <select id="voiceSelect"></select>
+      </div>
+
+      <div class="form-group">
+        <label>5. विज़ुअल फिल्टर / थीम (Theme Filter)</label>
+        <select id="filterSelect">
+          <option value="filter-none">Normal</option>
+          <option value="filter-cinematic">Cinematic Mood</option>
+          <option value="filter-vintage">Vintage Sepia</option>
+          <option value="filter-cyberpunk">Cyberpunk Neon</option>
+          <option value="filter-bw">Black & White Noir</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>6. कस्टम बैकग्राउंड म्यूजिक (Music Track)</label>
+        <input type="file" id="musicInput" accept="audio/*">
+      </div>
+
+      <button class="btn" id="saveSceneBtn">➕ नया सीन जोड़ें (Add Scene)</button>
+    </div>
+
+    <div class="preview-area panel">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="videoCanvas" width="1280" height="720"></canvas>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn" id="playAllBtn">▶️ पूरा वीडियो चलाएं (Play Unlimited Video)</button>
+        <button class="btn btn-secondary" id="exportBtn">⬇️ वीडियो डाउनलोड करें (.WebM)</button>
+      </div>
+
+      <div class="timeline">
+        <h4>वीडियो टाइमलाइन (Scenes Queue)</h4>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">आप जितने चाहें उतने सीन्स जोड़ सकते हैं। वीडियो की लंबाई पर कोई सीमा नहीं है।</p>
+        <div class="scene-list" id="sceneList">
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('videoCanvas');
+    const ctx = canvas.getContext('2d');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+    
+    let scenes = [];
+    let currentSceneIndex = 0;
+    let synth = window.speechSynthesis;
+    let voices = [];
+    let bgMusicAudio = new Audio();
+
+    // Fill Speech Synthesis Voices
+    function populateVoices() {
+      voices = synth.getVoices();
+      const voiceSelect = document.getElementById('voiceSelect');
+      voiceSelect.innerHTML = '';
+      voices.forEach((voice, i) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.value = i;
+        voiceSelect.appendChild(option);
+      });
+    }
+    populateVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    // Default Scene Placeholder
+    let currentBgImage = null;
+    let currentCharImage = null;
+
+    document.getElementById('bgInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => { currentBgImage = img; renderCanvas(); };
+      }
+    });
+
+    document.getElementById('charInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => { currentCharImage = img; renderCanvas(); };
+      }
+    });
+
+    document.getElementById('filterSelect').addEventListener('change', (e) => {
+      canvasWrapper.className = 'canvas-wrapper ' + e.target.value;
+    });
+
+    document.getElementById('musicInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        bgMusicAudio.src = URL.createObjectURL(file);
+        bgMusicAudio.loop = true;
+        bgMusicAudio.volume = 0.2; // 20% background volume
+      }
+    });
+
+    // Render Canvas Frame
+    function renderCanvas(text = "", zoomFactor = 1.0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Custom Background
+      if (currentBgImage) {
+        ctx.drawImage(currentBgImage, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = "#1e1e2e";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Draw Custom Character (with subtle animation scale)
+      if (currentCharImage) {
+        const charWidth = 350 * zoomFactor;
+        const charHeight = (currentCharImage.height / currentCharImage.width) * charWidth;
+        const xPos = (canvas.width / 2) - (charWidth / 2);
+        const yPos = canvas.height - charHeight;
+        ctx.drawImage(currentCharImage, xPos, yPos, charWidth, charHeight);
+      }
+
+      // Render Subtitles Text
+      if (text) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(50, canvas.height - 100, canvas.width - 100, 70);
+        ctx.font = "bold 28px sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.fillText(text, canvas.width / 2, canvas.height - 55);
+      }
+    }
+
+    // Add Scene to Timeline
+    document.getElementById('saveSceneBtn').addEventListener('click', () => {
+      const text = document.getElementById('sceneText').value;
+      const voiceIndex = document.getElementById('voiceSelect').value;
+      const filter = document.getElementById('filterSelect').value;
+
+      const scene = {
+        bg: currentBgImage,
+        char: currentCharImage,
+        text: text || "Scene dialogue",
+        voiceIndex: voiceIndex,
+        filter: filter
+      };
+
+      scenes.push(scene);
+      updateTimelineUI();
+      alert(`सीन #${scenes.length} सफलतापूर्वक जोड़ा गया!`);
+    });
+
+    function updateTimelineUI() {
+      const sceneList = document.getElementById('sceneList');
+      sceneList.innerHTML = '';
+      scenes.forEach((sc, idx) => {
+        const card = document.createElement('div');
+        card.className = `scene-card ${idx === currentSceneIndex ? 'active' : ''}`;
+        card.innerHTML = `<strong>Scene ${idx + 1}</strong><br><small>${sc.text.substring(0, 15)}...</small>`;
+        card.onclick = () => loadScene(idx);
+        sceneList.appendChild(card);
+      });
+    }
+
+    function loadScene(index) {
+      currentSceneIndex = index;
+      const sc = scenes[index];
+      currentBgImage = sc.bg;
+      currentCharImage = sc.char;
+      canvasWrapper.className = 'canvas-wrapper ' + sc.filter;
+      renderCanvas(sc.text);
+      updateTimelineUI();
+    }
+
+    // Play All Scenes Sequentially (Unlimited Duration Player)
+    document.getElementById('playAllBtn').addEventListener('click', async () => {
+      if (scenes.length === 0) {
+        alert("कृपया पहले कम से कम एक सीन जोड़ें!");
+        return;
+      }
+      if (bgMusicAudio.src) bgMusicAudio.play();
+
+      for (let i = 0; i < scenes.length; i++) {
+        loadScene(i);
+        await playSceneAudio(scenes[i]);
+      }
+
+      if (bgMusicAudio.src) bgMusicAudio.pause();
+    });
+
+    function playSceneAudio(scene) {
+      return new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(scene.text);
+        if (voices[scene.voiceIndex]) utterance.voice = voices[scene.voiceIndex];
+        
+        let animationFrame;
+        let zoom = 1.0;
+        let zoomDirection = 0.0005;
+
+        // Subtle Ken Burns animation during speech
+        const animate = () => {
+          zoom += zoomDirection;
+          if (zoom > 1.05 || zoom < 0.98) zoomDirection *= -1;
+          renderCanvas(scene.text, zoom);
+          animationFrame = requestAnimationFrame(animate);
+        };
+        animate();
+
+        utterance.onend = () => {
+          cancelAnimationFrame(animationFrame);
+          renderCanvas(scene.text, 1.0);
+          resolve();
+        };
+
+        synth.speak(utterance);
+      });
+    }
+
+    // Export Unlimited Length Video File (.WebM)
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      if (scenes.length === 0) {
+        alert("वीडियो एक्सपोर्ट करने के लिए सीन्स जोड़ें!");
+        return;
+      }
+
+      const stream = canvas.captureStream(30); // 30 FPS
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'AI_Unlimited_Video.webm';
+        a.click();
+      };
+
+      recorder.start();
+      document.getElementById('playAllBtn').click();
+
+      // Wait for all speeches to finish
+      const checkInterval = setInterval(() => {
+        if (!synth.speaking) {
+          clearInterval(checkInterval);
+          recorder.stop();
+        }
+      }, 1000);
+    });
+
+    // Initial Render
+    renderCanvas();
+  </script>
+</body>
+</html>
